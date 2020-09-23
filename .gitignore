@@ -1,0 +1,10 @@
+
+\.ipynb_checkpoints/
+
+DB/*.sqlite3
+
+Temp/
+
+DB/SRC/
+
+model\.csv
