@@ -32,8 +32,12 @@ target="_blank">bankrpt_test.ipynb</a> - блокнот проверок и
 
 Используются следующие источники данных:
 - <a 
-href="http://cbr.ru/statistics/bank_sector/" target="_blank">http://cbr.ru/statistics/bank_sector/</a>
-- <a href="http://cbr.ru/statistics/bank_sector/int_rat/" target="_blank">http://cbr.ru/statistics/bank_sector/int_rat/</a>
+href="http://cbr.ru/statistics/bank_sector/" 
+target="_blank">http://cbr.ru/statistics/bank_sector/</a> - ссуды 
+и резервы (lending  lending_reserv)
+- <a href="http://cbr.ru/statistics/bank_sector/int_rat/" 
+target="_blank">http://cbr.ru/statistics/bank_sector/int_rat/</a> - 
+кредиты нефинансовым организациям (loan)
 
 ## Алгоритм работы с моделью 
 
@@ -56,7 +60,7 @@ href="http://cbr.ru/statistics/bank_sector/" target="_blank">http://cbr.ru/stati
 для оценки и пересчета промежуточных 
 моделей. Так же в этом блокноте 
 формируется фрейм для работы основной 
-модели - данные проблеваются на 
+модели - данные продлеваются на 
 прогнозный период, пропуски 
 заполняются, остутсвующие данные 
 удаляется. Готовый фрейм сохраняется в 
