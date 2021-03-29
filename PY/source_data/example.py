@@ -68,7 +68,7 @@ def test_features(xsrc:sd.abcDataSource):
 
 def main():
     # источник - ФАКТИЧЕСКИЕ данные (в случае с данными из sqlite3 разница ТОЛЬКО "идеологическая")
-    x1 = sd.db_source(_strSQLpath1, sd.RowTypes.FACT, _lstQuery)
+    x1 = sd.DBSource(_strSQLpath1, sd.RowTypes.FACT, _lstQuery)
     test_features(x1)
 
     # источник - ФАКТИЧЕСКИЕ данные (в ЭТОМ случае ВАЖНО)

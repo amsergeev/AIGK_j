@@ -9,7 +9,7 @@
  например, из памяти или сsv-файлов)
  :abcDataSource - абстрактный класс, общий предок для классов загрузки данных. Основная функция, реализуемая в потомках: - маке_frame,
  формирует и возвращает фрейм данных в форматах Питон-моделей
- :db_source - класс для чтения данных из файлов sqlite3, основного источника данных для Питон-моделей
+ :DBSource - класс для чтения данных из файлов sqlite3, основного источника данных для Питон-моделей
  :excel_source - класс  для чтения данных из файлов MS Excel
 
 """
@@ -25,7 +25,7 @@ import re
 class RowTypes(Enum):
     """Перечисление задает константы-флаги для удобства установки или определения типа загруженных рядов"""
 
-    # флаг радов из базы данныз, фактических
+    # флаг рядов из базы данныз, фактических
     FACT = 0
 
     # флаг экзогенных ПАРАМЕТРОВ
@@ -168,7 +168,7 @@ class abcDataSource(ABC):
     data source {_source}'''.format(_from=self.source_type.name, _type=self.row_type.name,
                                     _source=self.source_path, _name=self.name)
 
-class db_source(abcDataSource):
+class DBSource(abcDataSource):
     """класс для чтения данных из sqlite
 
     Предполагается, что фактические, экзогенные и модельные данные хранятся в отдельных файлах sqlite с идентичной структурой:
@@ -247,11 +247,11 @@ from {data_table} join {headers_table} on {data_table}.code = {headers_table}.co
         self._source_type = SourceTypes.SQLITE
         self._prepare = None
         if type(lstFields)==str:
-            self._whereCond='where {headers_table}.code2 == "{code2}"'.format(headers_table=db_source._strHearedsTable,
-                                                                            code2=lstFields)
+            self._whereCond='where {headers_table}.code2 == "{code2}"'.format(headers_table=DBSource._strHearedsTable,
+                                                                              code2=lstFields)
         else:
-            self._whereCond = 'where {headers_table}.code2 in {codes2}'.format(headers_table=db_source._strHearedsTable,
-                                                                           codes2=tuple(lstFields))
+            self._whereCond = 'where {headers_table}.code2 in {codes2}'.format(headers_table=DBSource._strHearedsTable,
+                                                                               codes2=tuple(lstFields))
     def check(self):
         """проверка структуры файла бд по наличию таблиц и полей в таблицах"""
 
@@ -259,8 +259,8 @@ from {data_table} join {headers_table} on {data_table}.code = {headers_table}.co
         MD=MetaData()
         MD.reflect(bind=self._sql_engine)
         try:
-            cond1 = {c.name for c in MD.tables[db_source._strDataTable].columns} == set(db_source._lstDataTableColumns)
-            cond2 = {c.name for c in MD.tables[db_source._strHearedsTable].columns} == set(db_source._lstHeaderTableColumns)
+            cond1 = {c.name for c in MD.tables[DBSource._strDataTable].columns} == set(DBSource._lstDataTableColumns)
+            cond2 = {c.name for c in MD.tables[DBSource._strHearedsTable].columns} == set(DBSource._lstHeaderTableColumns)
             return cond1 and cond2
         except KeyError:
             return False
@@ -269,15 +269,15 @@ from {data_table} join {headers_table} on {data_table}.code = {headers_table}.co
     @property
     def table(self):
         """возвращает подготовленный sql-запрос к базе даных"""
-        return db_source._strQuery.format(data_table=db_source._strDataTable,
-                                     headers_table=db_source._strHearedsTable,
-                                     where_condition=self._whereCond)
+        return DBSource._strQuery.format(data_table=DBSource._strDataTable,
+                                         headers_table=DBSource._strHearedsTable,
+                                         where_condition=self._whereCond)
 
     @property
     def dataset_pass(self):
         """возвращает фрейм с заголовками выбранных рядов - описания рядов"""
-        return pd.read_sql(db_source.strQueryPass.format(headers_table=db_source._strHearedsTable,
-                                                         where_condition=self._whereCond),  con=self._sql_engine).set_index('code2')
+        return pd.read_sql(DBSource.strQueryPass.format(headers_table=DBSource._strHearedsTable,
+                                                        where_condition=self._whereCond), con=self._sql_engine).set_index('code2')
 
     def make_frame(self):
         """возвращает фрейм подготовленный данных
@@ -419,7 +419,7 @@ class excel_source(abcDataSource):
 
 
 def read_sql():
-    x1=db_source(path.join(r'/home/egor/git/jupyter/AIGK', 'DB', 'year.sqlite3'), RowTypes.FACT, ['CPIAv', 'LevelRate', 'loan_rate', 'not_in_sheet'])
+    x1=DBSource(path.join(r'/home/egor/git/jupyter/AIGK', 'DB', 'year.sqlite3'), RowTypes.FACT, ['CPIAv', 'LevelRate', 'loan_rate', 'not_in_sheet'])
     # x1.prepare = {'func':prep.scale, 'list_field': ['CPIAv', ], 'param':10}
     print(x1.make_frame())
     print(x1.dataset_pass.columns)

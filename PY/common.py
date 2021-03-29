@@ -8,7 +8,7 @@ from scipy.stats import rv_continuous
 from scipy.integrate import quad
 import numpy as np
 import pandas as pd
-from source_data.src import db_source, RowTypes
+from source_data.src import DBSource, RowTypes
 import source_data.prepare as prep
 
 warnings.filterwarnings('ignore')
@@ -63,7 +63,7 @@ class Common:
         elif type(row_codes) in (tuple, list):
             where_condition = 'where {0}.code2 in {1}'.format(header_table, tuple(row_codes))
 
-        str_select = '''select {0}.date, {0}.value, {1}.code2 from {0} join {1}on {0}.code={1}.code {3}'''.format(
+        str_select = '''select {0}.date, {0}.value, {1}.code2 from {0} join {1} on {0}.code={1}.code {2}'''.format(
             data_table, header_table, where_condition)
 
         return str_select
@@ -108,7 +108,7 @@ class Common:
         return pdf
 
     @staticmethod
-    def combine_frames(*lst_source_data: db_source):
+    def combine_frames(*lst_source_data: DBSource):
         """
         правильно соединяет все источники данных для моделей
         основной фрейм - база данных, если в нем что-либо равно np.nan то
@@ -118,7 +118,7 @@ class Common:
         если какой-либо фрейм остуствует, он, понятное дело, не комбинируется
 
 
-        :param lst_source_data: переменные класса source_data.src.db_source (не меньше одного, не больше 4)
+        :param lst_source_data: переменные класса source_data.src.DBSource (не меньше одного, не больше 4)
         :return: pandas DataFrame, собранный и готовый
         """
 
@@ -185,22 +185,22 @@ if __name__ == "__main__":
 
     list_svod = ['price1mddy_alt_x', 'price1mall_alt_x', 'AvSqDdy', 'AvSqVtor', 'VvodyIZDunits', 'VvodyMKD',
                  'VvodyMKD_inst', 'VvodyMKD_gov', 'VvodyIZD', 'VvodyMKDunits', 'sdelkikp_x', 'sdelkiddy_x']  # ре
-    common = Common()
-    srcAct = db_source(common.str_year_db_path, RowTypes.FACT, list_year_codes)
-    srcAct.prepare = [{'func': prep.scale, 'list_fields': ['Inc_x', ], 'param': 1e3},
-                      {'func': prep.scale, 'list_fields': ['sdelkiddy_ss_x', ], 'param': 1e6}]
+    common = Common(path.join('..', 'DB', 'year.sqlite3'))
+    source_active = DBSource(common.str_year_db_path, RowTypes.FACT, list_year_codes)
+    source_active.prepare = [{'func': prep.scale, 'list_fields': ['Inc_x', ], 'param': 1e3},
+                             {'func': prep.scale, 'list_fields': ['sdelkiddy_ss_x', ], 'param': 1e6}]
 
-    srcExog = db_source(common.str_ex_year_db_path, RowTypes.EXOG_R, list_year_codes)
+    source_exogenous = DBSource(common.str_ex_year_db_path, RowTypes.EXOG_R, list_year_codes)
 
-    srcExogP = db_source(common.str_ex_param_db_path, RowTypes.EXOG_P, list_year_codes)
+    source_exog_parameters = DBSource(common.str_ex_param_db_path, RowTypes.EXOG_P, list_year_codes)
 
-    srcSvod = db_source(common.str_svod_db_path, RowTypes.MODEL, list_svod)
+    srcSvod = DBSource(common.str_svod_db_path, RowTypes.MODEL, list_svod)
     srcSvod.prepare = {'func': prep.scale, 'list_fields': ['price1mddy_alt_x', 'price1mall_alt_x'], 'param': 1e3}
 
-    pdfWork = (srcAct.make_frame().combine_first(srcExog.make_frame())
-               .combine_first(srcExogP.make_frame())
+    pdfWork = (source_active.make_frame().combine_first(source_exogenous.make_frame())
+               .combine_first(source_exog_parameters.make_frame())
                .combine_first(srcSvod.make_frame()))
 
-    common.combine_frames(srcAct, srcExog, srcExogP, srcSvod)
+    common.combine_frames(source_active, source_exogenous, source_exog_parameters, srcSvod)
 
     kolmakov = KolmakovGen(a=0.0, name='kolmakov', shapes='sigma, mu')
